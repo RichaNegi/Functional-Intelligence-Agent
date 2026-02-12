@@ -216,10 +216,6 @@ The web application runs in debug mode and provides detailed logs in the termina
 - [ ] Advanced visualization dashboards
 - [ ] Team collaboration features
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 🙏 Acknowledgments
 
 - **Google Gemini** for AI-powered analysis capabilities
