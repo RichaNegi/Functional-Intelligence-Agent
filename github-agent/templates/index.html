@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Enterprise Intelligence Agent</title>
+    <title>Functional Intelligent Agent</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -63,6 +63,52 @@
             background: #ccc;
             cursor: not-allowed;
             transform: none;
+        }
+        .secondary-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            margin-top: 15px;
+            display: block;
+            width: 100%;
+        }
+        .secondary-btn:hover {
+            transform: translateY(-2px);
+        }
+        .secondary-btn:disabled {
+            background: #ccc;
+            transform: none;
+        }
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .success-message a {
+            color: #155724;
+            font-weight: bold;
+        }
+        .issue-status {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .creating-issue {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .creating-issue .spinner {
+            width: 20px;
+            height: 20px;
+            margin: 0;
         }
         .loading {
             display: none;
@@ -129,8 +175,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>🚀 GitHub Enterprise Intelligence Agent</h1>
-        <p>Analyze any GitHub repository for security, architecture, and performance insights</p>
+        <h1>🚀 Functional Intelligent Agent</h1>
+        <p>AI-driven repository intelligence: detect gaps, risks, architecture issues, and performance improvements — automatically actionable.</p>
     </div>
 
     <div class="input-section">
@@ -152,17 +198,25 @@
     </div>
 
     <div class="results" id="results">
+        <div class="issue-status" id="issueStatus" style="display: none;">
+            <div id="issueResult"></div>
+        </div>
         <h2>Analysis Results</h2>
         <div class="analysis-content" id="analysisContent"></div>
     </div>
 
     <script>
+        let currentAnalysis = null;
+        let currentRepoUrl = null;
+
         async function analyzeRepo() {
             const repoUrl = document.getElementById('repoUrl').value.trim();
             const analyzeBtn = document.getElementById('analyzeBtn');
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
             const analysisContent = document.getElementById('analysisContent');
+            const issueStatus = document.getElementById('issueStatus');
+            const issueResult = document.getElementById('issueResult');
 
             if (!repoUrl) {
                 alert('Please enter a GitHub repository URL');
@@ -174,6 +228,8 @@
             analyzeBtn.textContent = 'Analyzing...';
             loading.style.display = 'block';
             results.style.display = 'none';
+            issueStatus.style.display = 'none';
+            issueResult.innerHTML = ''; // Clear previous issue results
 
             try {
                 const response = await fetch('/analyze', {
@@ -189,6 +245,14 @@
                 if (data.success) {
                     analysisContent.innerHTML = data.html_analysis;
                     results.style.display = 'block';
+                    issueStatus.style.display = 'block';
+                    
+                    // Store for issue creation
+                    currentAnalysis = data.analysis;
+                    currentRepoUrl = data.repo_url;
+                    
+                    // Automatically create issue after successful analysis
+                    await createIssueAutomatically();
                 } else {
                     analysisContent.innerHTML = `<div class="error">Error: ${data.error}</div>`;
                     results.style.display = 'block';
@@ -197,10 +261,54 @@
                 analysisContent.innerHTML = `<div class="error">Error: ${error.message}</div>`;
                 results.style.display = 'block';
             } finally {
-                // Reset button state
+                // Reset analyze button state
                 analyzeBtn.disabled = false;
                 analyzeBtn.textContent = 'Analyze Repository';
                 loading.style.display = 'none';
+            }
+        }
+
+        async function createIssueAutomatically() {
+            if (!currentAnalysis || !currentRepoUrl) {
+                return;
+            }
+
+            const issueResult = document.getElementById('issueResult');
+
+            // Show creating issue state
+            issueResult.innerHTML = `
+                <div class="creating-issue">
+                    <div class="spinner"></div>
+                    <span>Creating GitHub issue with analysis findings...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('/create_issue', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        repo_url: currentRepoUrl, 
+                        analysis_result: currentAnalysis 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    issueResult.innerHTML = `
+                        <div class="success-message">
+                            🎉 GitHub issue created successfully!<br>
+                            <a href="${data.issue_url}" target="_blank">📋 View Issue #${data.issue_number}</a>
+                        </div>
+                    `;
+                } else {
+                    issueResult.innerHTML = `<div class="error">❌ Failed to create issue: ${data.error}</div>`;
+                }
+            } catch (error) {
+                issueResult.innerHTML = `<div class="error">❌ Error creating issue: ${error.message}</div>`;
             }
         }
 
