@@ -1,4 +1,4 @@
-# 🚀 GitHub Enterprise Intelligence Agent
+# 🚀 Functional Intelligence Agent
 
 An AI-powered tool that analyzes GitHub repositories and provides comprehensive enterprise intelligence insights. The agent automatically generates detailed reports covering security, architecture, performance, and developer efficiency recommendations, then creates GitHub issues with actionable tasks.
 
