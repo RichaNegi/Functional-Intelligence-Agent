@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Enterprise Intelligence Agent</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        input[type="url"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .analysis-content {
+            line-height: 1.6;
+            color: #333;
+        }
+        .analysis-content h1, .analysis-content h2, .analysis-content h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+        }
+        .analysis-content h1 {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .analysis-content ul {
+            padding-left: 20px;
+        }
+        .analysis-content li {
+            margin: 8px 0;
+        }
+        .analysis-content strong {
+            color: #2c3e50;
+        }
+        .analysis-content code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 GitHub Enterprise Intelligence Agent</h1>
+        <p>Analyze any GitHub repository for security, architecture, and performance insights</p>
+    </div>
+
+    <div class="input-section">
+        <h2>Repository Analysis</h2>
+        <div class="input-group">
+            <input 
+                type="url" 
+                id="repoUrl" 
+                placeholder="Enter GitHub repository URL (e.g., https://github.com/username/repo)"
+                value="https://github.com/Sachittarway/FSAD-Employee-Management-System"
+            >
+            <button onclick="analyzeRepo()" id="analyzeBtn">Analyze Repository</button>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Analyzing repository... This may take a few moments</p>
+    </div>
+
+    <div class="results" id="results">
+        <h2>Analysis Results</h2>
+        <div class="analysis-content" id="analysisContent"></div>
+    </div>
+
+    <script>
+        async function analyzeRepo() {
+            const repoUrl = document.getElementById('repoUrl').value.trim();
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const analysisContent = document.getElementById('analysisContent');
+
+            if (!repoUrl) {
+                alert('Please enter a GitHub repository URL');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analyzing...';
+            loading.style.display = 'block';
+            results.style.display = 'none';
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ repo_url: repoUrl })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    analysisContent.innerHTML = data.html_analysis;
+                    results.style.display = 'block';
+                } else {
+                    analysisContent.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    results.style.display = 'block';
+                }
+            } catch (error) {
+                analysisContent.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                results.style.display = 'block';
+            } finally {
+                // Reset button state
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Analyze Repository';
+                loading.style.display = 'none';
+            }
+        }
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('repoUrl').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeRepo();
+            }
+        });
+    </script>
+</body>
+</html>
